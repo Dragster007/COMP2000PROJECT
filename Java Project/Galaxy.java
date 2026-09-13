@@ -7,8 +7,13 @@ import java.util.List;
 public class Galaxy<T extends Body> {
     private final List<T> items = new ArrayList<>();
 
-    void add(T body){
-        items.add(body); 
+    void add(T body) throws DuplicateBodyException {
+        for (T item : items){
+            if (item.name.equals(body.name)){
+                throw new DuplicateBodyException(body.name);
+            }
+        }
+        items.add(body);
     }
 
     //Returns a sorted list of bodies in descending radius

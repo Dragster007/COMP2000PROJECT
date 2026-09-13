@@ -14,15 +14,20 @@ public class Main{
         Planet neptune=new Planet("Neptune",51.51,new Location(3002,0),4, new Velocity(0,0));
 
         Galaxy<Body> galaxy = new Galaxy<>();
-        galaxy.add(sun);
-        galaxy.add(mercury);
-        galaxy.add(venus);
-        galaxy.add(earth);
-        galaxy.add(mars);
-        galaxy.add(jupiter);
-        galaxy.add(saturn);
-        galaxy.add(uranus);
-        galaxy.add(neptune);
+        try {
+            galaxy.add(sun);
+            galaxy.add(mercury);
+            galaxy.add(venus);
+            galaxy.add(earth);
+            galaxy.add(mars);
+            galaxy.add(jupiter);
+            galaxy.add(saturn);
+            galaxy.add(uranus);
+            galaxy.add(neptune);
+        } catch (DuplicateBodyException e) {
+            System.err.println("Could not build the galaxy: " + e.getMessage());
+            return;
+        }
 
     // checking newobjects
     //     System.out.println(jupiter.mass);
