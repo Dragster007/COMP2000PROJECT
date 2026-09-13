@@ -1,3 +1,5 @@
+import java.awt.Color;
+
 public class Body {
        String  name;
        double mass;
@@ -11,8 +13,10 @@ public class Body {
         this.l=l;
         this.radius=radius;
         this.v=v;
-        
+
     }
 
-    
+    Color colour(){
+        return Color.LIGHT_GRAY;
+    }
 }

@@ -1,8 +1,10 @@
-
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.SwingUtilities;
 
 public class Main{
     public static void main (String []args){
-        
+
         Star sun = new Star ("Sun",1000000,new Location(0,0),10,new Velocity(0,0));
         Planet mercury=new Planet("Mercury",1.660,new Location(38.7,0),2,new Velocity(0,0));
         Planet venus=new Planet("Venus",24.47,new Location(72.3,0),2.5,new Velocity(0,0));
@@ -12,44 +14,44 @@ public class Main{
         Planet saturn=new Planet("Saturn",285.8,new Location(957.4,0),5,new Velocity(0,0));
         Planet uranus=new Planet("Uranus",43.66,new Location(1921,0),4,new Velocity(0,0));
         Planet neptune=new Planet("Neptune",51.51,new Location(3002,0),4, new Velocity(0,0));
-    /*checking newobjects
-        System.out.println(jupiter.mass);
-        */
-    /*checking physics gravity method
-        Velocity acceleration =Physics.calculateGravity(earth,sun);
-        System.out.println("X acceleration: "+ acceleration.vx);
-        System.out.println("Y acceleration: "+ acceleration.vy);
-        */
-     //checking acceleration  and if it changes the location aspects
-         for (int i=0;i<10000;i++){
-            Velocity acceleration= Physics.calculateGravity(earth,sun);
-            Physics.updateBody(earth,acceleration,1);
-            /*System.out.println("Earths x:"+ earth.l.x);
-            System.out.println("Earths y:"+ earth.l.y);
-            System.out.println("Earths vx:"+ earth.v.vx);
-            System.out.println("Earths vy:"+ earth.v.vy);
-            */
 
-        }
-         System.out.println("Earths x:"+ earth.l.x);
-         System.out.println("Earths y:"+ earth.l.y);
-         System.out.println("Earths vx:"+ earth.v.vx);
-         System.out.println("Earths vy:"+ earth.v.vy);
-            
+        List<Body> bodies = new ArrayList<>();
+        bodies.add(sun);
+        bodies.add(mercury);
+        bodies.add(venus);
+        bodies.add(earth);
+        bodies.add(mars);
+        bodies.add(jupiter);
+        bodies.add(saturn);
+        bodies.add(uranus);
+        bodies.add(neptune);
 
-      
+    // checking newobjects
+    //     System.out.println(jupiter.mass);
         
+    // checking physics gravity method
+    //     Velocity acceleration =Physics.calculateGravity(earth,sun);
+    //     System.out.println("X acceleration: "+ acceleration.vx);
+    //     System.out.println("Y acceleration: "+ acceleration.vy);
+    //     
+    //  //checking acceleration  and if it changes the location aspects
+    //      for (int i=0;i<10000;i++){
+    //         Velocity acceleration= Physics.calculateGravity(earth,sun);
+    //         Physics.updateBody(earth,acceleration,1);
+    //         System.out.println("Earths x:"+ earth.l.x);
+    //         System.out.println("Earths y:"+ earth.l.y);
+    //         System.out.println("Earths vx:"+ earth.v.vx);
+    //         System.out.println("Earths vy:"+ earth.v.vy);
+    //         
 
-       
+    //     }
+    //      System.out.println("Earths x:"+ earth.l.x);
+    //      System.out.println("Earths y:"+ earth.l.y);
+    //      System.out.println("Earths vx:"+ earth.v.vx);
+    //      System.out.println("Earths vy:"+ earth.v.vy);
+    
 
-
-
-
-        
-        
-        
-
-
+        SwingUtilities.invokeLater(() -> new SimulationWindow("Solar System", bodies).start());
     }
 
 }
