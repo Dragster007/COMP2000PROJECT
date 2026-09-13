@@ -15,9 +15,9 @@ public class SimulationPanel extends JPanel {
     private static final double SIZE_SCALE = 0.3;
     private static final int MIN_RADIUS_PX = 2;
 
-    private final List<Body> bodies;
+    private final List<? extends Body> bodies;
 
-    SimulationPanel(List<Body> bodies){
+    SimulationPanel(List<? extends Body> bodies){
         this.bodies=bodies;
         setBackground(Color.BLACK);
         setPreferredSize(new Dimension(1000,600));

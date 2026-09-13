@@ -1,5 +1,3 @@
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.SwingUtilities;
 
 public class Main{
@@ -15,16 +13,16 @@ public class Main{
         Planet uranus=new Planet("Uranus",43.66,new Location(1921,0),4,new Velocity(0,0));
         Planet neptune=new Planet("Neptune",51.51,new Location(3002,0),4, new Velocity(0,0));
 
-        List<Body> bodies = new ArrayList<>();
-        bodies.add(sun);
-        bodies.add(mercury);
-        bodies.add(venus);
-        bodies.add(earth);
-        bodies.add(mars);
-        bodies.add(jupiter);
-        bodies.add(saturn);
-        bodies.add(uranus);
-        bodies.add(neptune);
+        Galaxy<Body> galaxy = new Galaxy<>();
+        galaxy.add(sun);
+        galaxy.add(mercury);
+        galaxy.add(venus);
+        galaxy.add(earth);
+        galaxy.add(mars);
+        galaxy.add(jupiter);
+        galaxy.add(saturn);
+        galaxy.add(uranus);
+        galaxy.add(neptune);
 
     // checking newobjects
     //     System.out.println(jupiter.mass);
@@ -51,7 +49,7 @@ public class Main{
     //      System.out.println("Earths vy:"+ earth.v.vy);
     
 
-        SwingUtilities.invokeLater(() -> new SimulationWindow("Solar System", bodies).start());
+        SwingUtilities.invokeLater(() -> new SimulationWindow("Solar System", galaxy.byDescendingRadius()).start());
     }
 
 }
