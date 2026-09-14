@@ -8,7 +8,7 @@ public class Body {
        Velocity v;
 
        Body(String name , double mass, Location l, double radius ,Velocity v){
-        if (name == null || name.isBlank()){
+        if (name == null || name.trim().isEmpty()){
             throw new InvalidBodyException("A body needs a name");
         }
         if (mass <= 0){
