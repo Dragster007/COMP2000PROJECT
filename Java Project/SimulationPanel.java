@@ -8,7 +8,6 @@ import javax.swing.JPanel;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.awt.*;
 
 //Draws the celestial bodies
 public class SimulationPanel extends JPanel {
@@ -18,8 +17,6 @@ public class SimulationPanel extends JPanel {
     //Body Scale
     private static final double SIZE_SCALE = 0.3;
     private static final int MIN_RADIUS_PX = 2;
-    private int substeps = 100;   // physics updates per animation frame
-    private double dt = 3000;
 
     private final List<Body> bodies;
 
@@ -55,7 +52,6 @@ public class SimulationPanel extends JPanel {
     public void mouseClicked(MouseEvent e) {
         int cx = getWidth() / 2;
         int cy = getHeight() / 2;
-        // use the same scale paintComponent uses, so the meteor
         // lands where you actually clicked
         double simX = (e.getX() - cx) / DISTANCE_SCALE;
         double simY = (e.getY() - cy) / DISTANCE_SCALE;
@@ -76,55 +72,4 @@ public class SimulationPanel extends JPanel {
     }
 });
     }
-
-    private void step() {
-        for (int s = 0; s < substeps; s++) {
-            List<Velocity> accelerations = new ArrayList<>();
-            for (Body b : bodies) {
-                double ax = 0, ay = 0;
-                for (Body other : bodies) {
-                    if (other == b) continue;
-                    Velocity a = Physics.calculateGravity(b, other);
-                    ax += a.vx;
-                    ay += a.vy;
-                }
-                accelerations.add(new Velocity(ax, ay));
-            }
-            for (int i = 0; i < bodies.size(); i++) {
-                Physics.updateBody(bodies.get(i), accelerations.get(i), dt);
-            }
-        }
-        checkMeteorCollisions();
     }
-
-    // Checks every meteor against every planet; on overlap, the planet
-    // changes color (via collide()) and the meteor is removed.
-    private void checkMeteorCollisions() {
-        List<Body> toRemove = new ArrayList<>();
-
-        for (Body b : bodies) {
-            if (!(b instanceof Meteor)) continue;
-            Meteor meteor = (Meteor) b;
-
-            for (Body other : bodies) {
-                if (!(other instanceof Planet)) continue;
-                Planet planet = (Planet) other;
-
-                double dx = meteor.l.x - planet.l.x;
-                double dy = meteor.l.y - planet.l.y;
-                double distance = Math.sqrt(dx * dx + dy * dy);
-
-                // radii are in pixel units (used directly for drawing),
-                // so convert the collision threshold back into simulation units
-                double collisionDistance = (meteor.radius + planet.radius) / DISTANCE_SCALE;
-
-                if (distance < collisionDistance) {
-                    planet.collide();
-                    toRemove.add(meteor);
-                }
-            }
-        }
-
-        bodies.removeAll(toRemove);
-    }
-}
