@@ -5,6 +5,9 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.util.List;
 import javax.swing.JPanel;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 //Draws the celestial bodies
 public class SimulationPanel extends JPanel {
