@@ -4,19 +4,23 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Iterator;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 
-//Draws the celestial bodies
+//Draws the celestial bodies, and animates them using real gravity each frame
 public class SimulationPanel extends JPanel {
 
-    //Pixels per Unit of Distance
     private static final double DISTANCE_SCALE = 0.14;
-    //Body Scale
     private static final double SIZE_SCALE = 0.3;
     private static final int MIN_RADIUS_PX = 2;
+
+    private static final int TICK_DELAY_MS = 30;
+    private static final int STEPS_PER_TICK = 400;
+    private static final double DT = 1;
 
     private final List<Body> bodies;
 
@@ -24,6 +28,81 @@ public class SimulationPanel extends JPanel {
         this.bodies = new ArrayList<>(bodies);
         setBackground(Color.BLACK);
         setPreferredSize(new Dimension(1000,600));
+
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int cx = getWidth() / 2;
+                int cy = getHeight() / 2;
+                double simX = (e.getX() - cx) / DISTANCE_SCALE;
+                double simY = (e.getY() - cy) / DISTANCE_SCALE;
+
+                try {
+                    Meteor meteor = new Meteor(
+                            "Meteor",
+                            0.5,
+                            new Location(simX, simY),
+                            2,
+                            new Velocity(0, 0)
+                    );
+                    SimulationPanel.this.bodies.add(meteor);
+                    repaint();
+                } catch (InvalidBodyException ex) {
+                    System.err.println("Could not create meteor: " + ex.getMessage());
+                }
+            }
+        });
+
+        Timer timer = new Timer(TICK_DELAY_MS, e -> tick());
+        timer.start();
+    }
+
+    private void tick(){
+        for (int step = 0; step < STEPS_PER_TICK; step++){
+            applyGravity();
+        }
+        handleBlackHoleCollisions();
+        repaint();
+    }
+
+    private void applyGravity(){
+        for (Body body : bodies){
+            double ax = 0;
+            double ay = 0;
+            for (Body source : bodies){
+                if (source == body) continue;
+                Velocity a = Physics.calculateGravity(body, source);
+                ax += a.vx;
+                ay += a.vy;
+            }
+            Physics.updateBody(body, new Velocity(ax, ay), DT);
+        }
+    }
+
+    private void handleBlackHoleCollisions(){
+        Iterator<Body> it = bodies.iterator();
+        while (it.hasNext()){
+            Body body = it.next();
+            if (body instanceof BlackHole) continue;
+
+            for (Body source : bodies){
+                if (!(source instanceof BlackHole)) continue;
+
+                double dx = source.l.x - body.l.x;
+                double dy = source.l.y - body.l.y;
+                double distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < source.radius + body.radius){
+                    try {
+                        throw new CollisionException(body.name + " was consumed by " + source.name);
+                    } catch (CollisionException ex) {
+                        System.out.println(ex.getMessage());
+                        it.remove();
+                    }
+                    break;
+                }
+            }
+        }
     }
 
     @Override
@@ -32,7 +111,6 @@ public class SimulationPanel extends JPanel {
         Graphics2D g2=(Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
 
-        //The Sun sits at (0,0) in the model, so the middle of the panel is the origin.
         int centreX=getWidth()/2;
         int centreY=getHeight()/2;
 
@@ -46,30 +124,4 @@ public class SimulationPanel extends JPanel {
             g2.drawString(body.name,x+r+4,y-r-4);
         }
     }
-    {
-        addMouseListener(new MouseAdapter() {
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        int cx = getWidth() / 2;
-        int cy = getHeight() / 2;
-        // lands where you actually clicked
-        double simX = (e.getX() - cx) / DISTANCE_SCALE;
-        double simY = (e.getY() - cy) / DISTANCE_SCALE;
-
-        try {
-            Meteor meteor = new Meteor(
-                    "Meteor",
-                    0.5,
-                    new Location(simX, simY),
-                    2,
-                    new Velocity(0, 0)
-            );
-            bodies.add(meteor);
-            repaint();   // <-- actually redraw so the meteor appears
-        } catch (InvalidBodyException ex) {
-            System.err.println("Could not create meteor: " + ex.getMessage());
-        }
-    }
-});
-    }
-    }
+}
