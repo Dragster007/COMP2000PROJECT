@@ -6,12 +6,13 @@ public class Main{
         Star sun = new Star ("Sun",1000000,new Location(0,0),10,new Velocity(0,0));
         Planet mercury=new Planet("Mercury",1.660,new Location(38.7,0),2,new Velocity(0,0));
         Planet venus=new Planet("Venus",24.47,new Location(72.3,0),2.5,new Velocity(0,0));
-        Planet earth=new Planet("Earth",30.03,new Location(100,0),2.7,new Velocity(0,0.000000629));
+        Planet earth=new Planet("Earth",30.03,new Location(100,0),2.7,new Velocity(0,0.000000629), true);
         Planet mars=new Planet("Mars",3.227,new Location(152.4,0),2.2,new Velocity(0,0));
         Planet jupiter=new Planet("Jupiter",954.6,new Location(520.4,0),6,new Velocity(0,0));
         Planet saturn=new Planet("Saturn",285.8,new Location(957.4,0),5,new Velocity(0,0));
         Planet uranus=new Planet("Uranus",43.66,new Location(1921,0),4,new Velocity(0,0));
         Planet neptune=new Planet("Neptune",51.51,new Location(3002,0),4, new Velocity(0,0));
+        BlackHole sagA = new BlackHole("Sagittarius A*", 5000000, new Location(-300,0), 8, new Velocity(0,0));
 
         Galaxy<Body> galaxy = new Galaxy<>();
         try {
@@ -24,6 +25,7 @@ public class Main{
             galaxy.add(saturn);
             galaxy.add(uranus);
             galaxy.add(neptune);
+            galaxy.add(sagA);
         } catch (DuplicateBodyException e) {
             System.err.println("Could not build the galaxy: " + e.getMessage());
             return;
