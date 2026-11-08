@@ -22,21 +22,20 @@ public class SimulationPanel extends JPanel {
 
     private static final int TICK_DELAY_MS = 30;
     private static final int STEPS_PER_TICK = 400;
-    private static final double DT = 1;
+
+    // More simulation time passes during each physics step.
+    private static final double DT = 500000;
 
     private final List<Body> bodies;
 
-    // The currently selected celestial bodies.
     private StarType selectedStarType = StarType.G;
     private PlanetType selectedPlanetType = PlanetType.ROCKY;
 
-    // False means star mode, true means planet mode.
     private boolean planetMode = false;
-
-    // Used to give each planet a unique name.
     private int planetCount = 0;
 
     SimulationPanel(List<? extends Body> bodies) {
+
         this.bodies = new ArrayList<>(bodies);
 
         setBackground(Color.BLACK);
@@ -51,7 +50,6 @@ public class SimulationPanel extends JPanel {
                     return;
                 }
 
-                // Convert mouse coordinates to simulation coordinates.
                 int centreX = getWidth() / 2;
                 int centreY = getHeight() / 2;
 
@@ -77,49 +75,95 @@ public class SimulationPanel extends JPanel {
         timer.start();
     }
 
-    // Called when the star dropdown changes.
     void setSelectedStarType(StarType type) {
         selectedStarType = type;
     }
 
-    // Called when the planet dropdown changes.
     void setSelectedPlanetType(PlanetType type) {
         selectedPlanetType = type;
     }
 
-    // Called when the object dropdown changes.
     void setPlanetMode(boolean planetMode) {
         this.planetMode = planetMode;
     }
 
     private void createStar(Location position) {
 
-        // Only allow one star for now.
         for (Body body : bodies) {
             if (body instanceof Star) {
                 return;
             }
         }
 
-        try {
-            Star star = new Star(
-                    selectedStarType.label,
-                    selectedStarType,
-                    position,
-                    new Velocity(0, 0)
-            );
+        Star star = new Star(
+                selectedStarType.label,
+                selectedStarType,
+                position,
+                new Velocity(0, 0)
+        );
 
-            bodies.add(star);
+        bodies.add(star);
+    }
 
-        } catch (InvalidBodyException ex) {
-            System.err.println(ex.getMessage());
+    // Find the star already placed by the player.
+    private Star findStar() {
+
+        for (Body body : bodies) {
+            if (body instanceof Star) {
+                return (Star) body;
+            }
         }
+
+        return null;
+    }
+
+    // Calculate velocity for a circular orbit.
+    private Velocity calculateOrbitalVelocity(
+            Star star, Location position) {
+
+        double dx = position.x - star.l.x;
+        double dy = position.y - star.l.y;
+
+        double distance = Math.sqrt(dx * dx + dy * dy);
+
+        double speed = Math.sqrt(
+                Physics.G * star.mass / distance
+        );
+
+        // Velocity must be perpendicular to the
+        // direction between the star and planet.
+        double vx = -dy / distance * speed;
+        double vy = dx / distance * speed;
+
+        // Include the star's existing velocity.
+        return new Velocity(
+                star.v.vx + vx,
+                star.v.vy + vy
+        );
     }
 
     private void createPlanet(Location position) {
 
-        // Avoid placing two bodies at exactly the same position.
-        // Otherwise, gravity would divide by zero.
+        Star star = findStar();
+
+        if (star == null) {
+            System.out.println("Place a star first.");
+            return;
+        }
+
+        double dx = position.x - star.l.x;
+        double dy = position.y - star.l.y;
+
+        double distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Don't place planets inside the star.
+        if (distance <= star.radius
+                + selectedPlanetType.radius) {
+            System.out.println("Too close to the star.");
+            return;
+        }
+
+        // Don't place two bodies at the same position.
         for (Body body : bodies) {
             if (body.l.x == position.x
                     && body.l.y == position.y) {
@@ -127,27 +171,23 @@ public class SimulationPanel extends JPanel {
             }
         }
 
+        Velocity orbitalVelocity =
+                calculateOrbitalVelocity(star, position);
+
         planetCount++;
 
-        String name = "Planet " + planetCount;
+        Planet planet = new Planet(
+                "Planet " + planetCount,
+                selectedPlanetType,
+                position,
+                orbitalVelocity
+        );
 
-        try {
-            Planet planet = new Planet(
-                    name,
-                    selectedPlanetType,
-                    position,
-                    new Velocity(0, 0)
-            );
-
-            bodies.add(planet);
-
-        } catch (InvalidBodyException ex) {
-            planetCount--;
-            System.err.println(ex.getMessage());
-        }
+        bodies.add(planet);
     }
 
     private void tick() {
+
         for (int step = 0; step < STEPS_PER_TICK; step++) {
             applyGravity();
         }
@@ -157,13 +197,29 @@ public class SimulationPanel extends JPanel {
     }
 
     private void applyGravity() {
+
+        // First calculate acceleration for all bodies.
+        List<Velocity> accelerations = new ArrayList<>();
+
         for (Body body : bodies) {
 
             double ax = 0;
             double ay = 0;
 
             for (Body source : bodies) {
+
                 if (source == body) {
+                    continue;
+                }
+
+                double dx = source.l.x - body.l.x;
+                double dy = source.l.y - body.l.y;
+
+                double distanceSquared =
+                        dx * dx + dy * dy;
+
+                // Avoid division by zero.
+                if (distanceSquared < 1e-12) {
                     continue;
                 }
 
@@ -174,18 +230,26 @@ public class SimulationPanel extends JPanel {
                 ay += acceleration.vy;
             }
 
+            accelerations.add(new Velocity(ax, ay));
+        }
+
+        // Then update positions and velocities.
+        for (int i = 0; i < bodies.size(); i++) {
+
             Physics.updateBody(
-                    body,
-                    new Velocity(ax, ay),
+                    bodies.get(i),
+                    accelerations.get(i),
                     DT
             );
         }
     }
 
     private void handleBlackHoleCollisions() {
+
         Iterator<Body> iterator = bodies.iterator();
 
         while (iterator.hasNext()) {
+
             Body body = iterator.next();
 
             if (body instanceof BlackHole) {
@@ -193,6 +257,7 @@ public class SimulationPanel extends JPanel {
             }
 
             for (Body source : bodies) {
+
                 if (!(source instanceof BlackHole)) {
                     continue;
                 }
@@ -200,20 +265,17 @@ public class SimulationPanel extends JPanel {
                 double dx = source.l.x - body.l.x;
                 double dy = source.l.y - body.l.y;
 
-                double distance = Math.sqrt(dx * dx + dy * dy);
+                double distance =
+                        Math.sqrt(dx * dx + dy * dy);
 
                 if (distance < source.radius + body.radius) {
-                    try {
-                        throw new CollisionException(
-                                body.name + " was consumed by "
-                                        + source.name
-                        );
 
-                    } catch (CollisionException ex) {
-                        System.out.println(ex.getMessage());
-                        iterator.remove();
-                    }
+                    System.out.println(
+                            body.name + " was consumed by "
+                                    + source.name
+                    );
 
+                    iterator.remove();
                     break;
                 }
             }
@@ -222,6 +284,7 @@ public class SimulationPanel extends JPanel {
 
     @Override
     protected void paintComponent(Graphics g) {
+
         super.paintComponent(g);
 
         Graphics2D g2 = (Graphics2D) g;
@@ -237,14 +300,20 @@ public class SimulationPanel extends JPanel {
         for (Body body : bodies) {
 
             int x = centreX
-                    + (int) Math.round(body.l.x * DISTANCE_SCALE);
+                    + (int) Math.round(
+                            body.l.x * DISTANCE_SCALE
+                    );
 
             int y = centreY
-                    + (int) Math.round(body.l.y * DISTANCE_SCALE);
+                    + (int) Math.round(
+                            body.l.y * DISTANCE_SCALE
+                    );
 
             int radius = Math.max(
                     MIN_RADIUS_PX,
-                    (int) Math.round(body.radius * SIZE_SCALE)
+                    (int) Math.round(
+                            body.radius * SIZE_SCALE
+                    )
             );
 
             if (body instanceof Star) {
@@ -254,7 +323,6 @@ public class SimulationPanel extends JPanel {
                 );
             }
 
-            // Planet sizes are defined in PlanetType.
             if (body instanceof Planet) {
                 Planet planet = (Planet) body;
                 radius = planet.type.displayRadius;
