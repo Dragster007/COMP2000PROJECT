@@ -1,3 +1,4 @@
+
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -25,8 +26,15 @@ public class SimulationPanel extends JPanel {
 
     private final List<Body> bodies;
 
-    // The star type that will be created on the next click.
+    // The currently selected celestial bodies.
     private StarType selectedStarType = StarType.G;
+    private PlanetType selectedPlanetType = PlanetType.ROCKY;
+
+    // False means star mode, true means planet mode.
+    private boolean planetMode = false;
+
+    // Used to give each planet a unique name.
+    private int planetCount = 0;
 
     SimulationPanel(List<? extends Body> bodies) {
         this.bodies = new ArrayList<>(bodies);
@@ -39,19 +47,11 @@ public class SimulationPanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent e) {
 
-                // Only respond to the left mouse button.
                 if (e.getButton() != MouseEvent.BUTTON1) {
                     return;
                 }
 
-                // Allow only one star in this system.
-                for (Body body : SimulationPanel.this.bodies) {
-                    if (body instanceof Star) {
-                        return;
-                    }
-                }
-
-                // Convert the mouse position into simulation coordinates.
+                // Convert mouse coordinates to simulation coordinates.
                 int centreX = getWidth() / 2;
                 int centreY = getHeight() / 2;
 
@@ -61,23 +61,15 @@ public class SimulationPanel extends JPanel {
                 double simY =
                         (e.getY() - centreY) / DISTANCE_SCALE;
 
-                try {
-                    Star star = new Star(
-                            selectedStarType.label,
-                            selectedStarType,
-                            new Location(simX, simY),
-                            new Velocity(0, 0)
-                    );
+                Location position = new Location(simX, simY);
 
-                    SimulationPanel.this.bodies.add(star);
-
-                    repaint();
-
-                } catch (InvalidBodyException ex) {
-                    System.err.println(
-                            "Could not create star: " + ex.getMessage()
-                    );
+                if (planetMode) {
+                    createPlanet(position);
+                } else {
+                    createStar(position);
                 }
+
+                repaint();
             }
         });
 
@@ -85,9 +77,74 @@ public class SimulationPanel extends JPanel {
         timer.start();
     }
 
-    // Called when the player changes the dropdown selection.
+    // Called when the star dropdown changes.
     void setSelectedStarType(StarType type) {
         selectedStarType = type;
+    }
+
+    // Called when the planet dropdown changes.
+    void setSelectedPlanetType(PlanetType type) {
+        selectedPlanetType = type;
+    }
+
+    // Called when the object dropdown changes.
+    void setPlanetMode(boolean planetMode) {
+        this.planetMode = planetMode;
+    }
+
+    private void createStar(Location position) {
+
+        // Only allow one star for now.
+        for (Body body : bodies) {
+            if (body instanceof Star) {
+                return;
+            }
+        }
+
+        try {
+            Star star = new Star(
+                    selectedStarType.label,
+                    selectedStarType,
+                    position,
+                    new Velocity(0, 0)
+            );
+
+            bodies.add(star);
+
+        } catch (InvalidBodyException ex) {
+            System.err.println(ex.getMessage());
+        }
+    }
+
+    private void createPlanet(Location position) {
+
+        // Avoid placing two bodies at exactly the same position.
+        // Otherwise, gravity would divide by zero.
+        for (Body body : bodies) {
+            if (body.l.x == position.x
+                    && body.l.y == position.y) {
+                return;
+            }
+        }
+
+        planetCount++;
+
+        String name = "Planet " + planetCount;
+
+        try {
+            Planet planet = new Planet(
+                    name,
+                    selectedPlanetType,
+                    position,
+                    new Velocity(0, 0)
+            );
+
+            bodies.add(planet);
+
+        } catch (InvalidBodyException ex) {
+            planetCount--;
+            System.err.println(ex.getMessage());
+        }
     }
 
     private void tick() {
@@ -101,6 +158,7 @@ public class SimulationPanel extends JPanel {
 
     private void applyGravity() {
         for (Body body : bodies) {
+
             double ax = 0;
             double ay = 0;
 
@@ -147,7 +205,8 @@ public class SimulationPanel extends JPanel {
                 if (distance < source.radius + body.radius) {
                     try {
                         throw new CollisionException(
-                                body.name + " was consumed by " + source.name
+                                body.name + " was consumed by "
+                                        + source.name
                         );
 
                     } catch (CollisionException ex) {
@@ -176,6 +235,7 @@ public class SimulationPanel extends JPanel {
         int centreY = getHeight() / 2;
 
         for (Body body : bodies) {
+
             int x = centreX
                     + (int) Math.round(body.l.x * DISTANCE_SCALE);
 
@@ -187,12 +247,17 @@ public class SimulationPanel extends JPanel {
                     (int) Math.round(body.radius * SIZE_SCALE)
             );
 
-            // Enlarge the star's drawing so it is easy to see.
             if (body instanceof Star) {
                 radius = Math.max(
                         6,
                         (int) Math.round(body.radius * 6)
                 );
+            }
+
+            // Planet sizes are defined in PlanetType.
+            if (body instanceof Planet) {
+                Planet planet = (Planet) body;
+                radius = planet.type.displayRadius;
             }
 
             g2.setColor(body.colour());
