@@ -22,9 +22,7 @@ public class SimulationPanel extends JPanel {
 
     private static final int TICK_DELAY_MS = 30;
     private static final int STEPS_PER_TICK = 400;
-
-    // More simulation time passes during each physics step.
-    private static final double DT = 500000;
+    private static final double DT = 50000;
 
     private final List<Body> bodies;
 
@@ -33,6 +31,9 @@ public class SimulationPanel extends JPanel {
 
     private boolean planetMode = false;
     private int planetCount = 0;
+
+    // NEW: Controls whether physics is running.
+    private boolean running = false;
 
     SimulationPanel(List<? extends Body> bodies) {
 
@@ -59,7 +60,8 @@ public class SimulationPanel extends JPanel {
                 double simY =
                         (e.getY() - centreY) / DISTANCE_SCALE;
 
-                Location position = new Location(simX, simY);
+                Location position =
+                        new Location(simX, simY);
 
                 if (planetMode) {
                     createPlanet(position);
@@ -75,6 +77,10 @@ public class SimulationPanel extends JPanel {
         timer.start();
     }
 
+    // --------------------------------
+    // OBJECT SELECTION
+    // --------------------------------
+
     void setSelectedStarType(StarType type) {
         selectedStarType = type;
     }
@@ -87,8 +93,40 @@ public class SimulationPanel extends JPanel {
         this.planetMode = planetMode;
     }
 
+    // --------------------------------
+    // NEW: SIMULATION CONTROLS
+    // --------------------------------
+
+    void play() {
+        running = true;
+    }
+
+    void pause() {
+        running = false;
+    }
+
+    void reset() {
+
+        // Stop the simulation.
+        running = false;
+
+        // Remove every celestial body.
+        bodies.clear();
+
+        // Reset planet numbering.
+        planetCount = 0;
+
+        // Update the display.
+        repaint();
+    }
+
+    // --------------------------------
+    // STAR CREATION
+    // --------------------------------
+
     private void createStar(Location position) {
 
+        // Only one star for now.
         for (Body body : bodies) {
             if (body instanceof Star) {
                 return;
@@ -105,7 +143,6 @@ public class SimulationPanel extends JPanel {
         bodies.add(star);
     }
 
-    // Find the star already placed by the player.
     private Star findStar() {
 
         for (Body body : bodies) {
@@ -117,25 +154,26 @@ public class SimulationPanel extends JPanel {
         return null;
     }
 
-    // Calculate velocity for a circular orbit.
+    // --------------------------------
+    // PLANET CREATION
+    // --------------------------------
+
     private Velocity calculateOrbitalVelocity(
             Star star, Location position) {
 
         double dx = position.x - star.l.x;
         double dy = position.y - star.l.y;
 
-        double distance = Math.sqrt(dx * dx + dy * dy);
+        double distance =
+                Math.sqrt(dx * dx + dy * dy);
 
         double speed = Math.sqrt(
                 Physics.G * star.mass / distance
         );
 
-        // Velocity must be perpendicular to the
-        // direction between the star and planet.
         double vx = -dy / distance * speed;
         double vy = dx / distance * speed;
 
-        // Include the star's existing velocity.
         return new Velocity(
                 star.v.vx + vx,
                 star.v.vy + vy
@@ -154,16 +192,16 @@ public class SimulationPanel extends JPanel {
         double dx = position.x - star.l.x;
         double dy = position.y - star.l.y;
 
-        double distance = Math.sqrt(dx * dx + dy * dy);
+        double distance =
+                Math.sqrt(dx * dx + dy * dy);
 
-        // Don't place planets inside the star.
         if (distance <= star.radius
                 + selectedPlanetType.radius) {
+
             System.out.println("Too close to the star.");
             return;
         }
 
-        // Don't place two bodies at the same position.
         for (Body body : bodies) {
             if (body.l.x == position.x
                     && body.l.y == position.y) {
@@ -186,20 +224,30 @@ public class SimulationPanel extends JPanel {
         bodies.add(planet);
     }
 
+    // --------------------------------
+    // SIMULATION UPDATE
+    // --------------------------------
+
     private void tick() {
+
+        // NEW: Only update physics when playing.
+        if (!running) {
+            return;
+        }
 
         for (int step = 0; step < STEPS_PER_TICK; step++) {
             applyGravity();
         }
 
         handleBlackHoleCollisions();
+
         repaint();
     }
 
     private void applyGravity() {
 
-        // First calculate acceleration for all bodies.
-        List<Velocity> accelerations = new ArrayList<>();
+        List<Velocity> accelerations =
+                new ArrayList<>();
 
         for (Body body : bodies) {
 
@@ -218,7 +266,6 @@ public class SimulationPanel extends JPanel {
                 double distanceSquared =
                         dx * dx + dy * dy;
 
-                // Avoid division by zero.
                 if (distanceSquared < 1e-12) {
                     continue;
                 }
@@ -230,10 +277,11 @@ public class SimulationPanel extends JPanel {
                 ay += acceleration.vy;
             }
 
-            accelerations.add(new Velocity(ax, ay));
+            accelerations.add(
+                    new Velocity(ax, ay)
+            );
         }
 
-        // Then update positions and velocities.
         for (int i = 0; i < bodies.size(); i++) {
 
             Physics.updateBody(
@@ -244,9 +292,14 @@ public class SimulationPanel extends JPanel {
         }
     }
 
+    // --------------------------------
+    // BLACK HOLE COLLISIONS
+    // --------------------------------
+
     private void handleBlackHoleCollisions() {
 
-        Iterator<Body> iterator = bodies.iterator();
+        Iterator<Body> iterator =
+                bodies.iterator();
 
         while (iterator.hasNext()) {
 
@@ -268,7 +321,8 @@ public class SimulationPanel extends JPanel {
                 double distance =
                         Math.sqrt(dx * dx + dy * dy);
 
-                if (distance < source.radius + body.radius) {
+                if (distance < source.radius
+                        + body.radius) {
 
                     System.out.println(
                             body.name + " was consumed by "
@@ -281,6 +335,10 @@ public class SimulationPanel extends JPanel {
             }
         }
     }
+
+    // --------------------------------
+    // DRAW THE SIMULATION
+    // --------------------------------
 
     @Override
     protected void paintComponent(Graphics g) {
