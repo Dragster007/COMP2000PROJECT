@@ -1,0 +1,30 @@
+*   [33m9f65312[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge pull request #3 from neatjutsu/add-blackhole-and-life
+[31m|[m[32m\[m  
+[31m|[m *   [33m578c043[m Merge branch 'add-blackhole-and-life' of https://github.com/neatjutsu/COMP2000PROJECT-Justin- into add-blackhole-and-life the commit.
+[31m|[m [33m|[m[34m\[m  
+[31m|[m [33m|[m *   [33mc7ed13d[m Merge branch 'Dragster007:main' into add-blackhole-and-life
+[31m|[m [33m|[m [35m|[m[31m\[m  
+[31m|[m [33m|[m[31m_[m[35m|[m[31m/[m  
+[31m|[m[31m/[m[33m|[m [35m|[m   
+* [33m|[m [35m|[m   [33m8a6525a[m Merge pull request #2 from neatjutsu/add-blackhole-and-life
+[1;31m|[m[1;32m\[m [33m\[m [35m\[m  
+[1;31m|[m [1;32m|[m * [35m|[m [33mc6fc980[m Add live gravity simulation and black hole collision handling using CollisionException
+[1;31m|[m [1;32m|[m [35m|[m[35m/[m  
+[1;31m|[m [1;32m|[m * [33me44f677[m Fix: actually add BlackHole and hasLife logic
+[1;31m|[m [1;32m|[m[1;32m/[m  
+[1;31m|[m * [33m8ae529f[m[33m ([m[1;32mpr/2[m[33m)[m Add BlackHole class and hasLife colour logic to Planet
+[1;31m|[m[1;31m/[m  
+* [33mea21aa7[m Removed excess fluff
+* [33m289cf2d[m add collisionexception and made it where if you click a meteor appears
+* [33m27d051a[m some imports
+* [33m4ae00cd[m isBlank update change
+* [33mdee9f28[m Updated Meteor.java
+*   [33m435b387[m Merge pull request #1 from icyalbie/main
+[1;33m|[m[1;34m\[m  
+[1;33m|[m * [33ma4504b9[m Added Custom Exceptions for Body and Galaxy - Body now throws an exception for blank names, or negative mass/radii - Galaxy throws an exception if an item with an identical name already exists
+[1;33m|[m * [33m7b968db[m Replaced ArrayList with Galaxy<T extends Body> container - Changed ArrayList<Body> to Galaxy<T extends body> - Allows Galaxy container to sort by descending radius to prevent larger bodies from covering smaller ones
+[1;33m|[m * [33m14beb54[m Added a JFrame/JPanel Window to draw all celestial bodies - colour() parameter added to Body, overridden in Star, Planet, Moon - SimulationPanel draws every body in List<Body> - SimulationWindow displays panel in a JFrame - Main stores bodies into a List<Body> and launches the window. - Commented out gravity test loop
+* [1;34m|[m [33m8ea7f6d[m Update Meteor.java
+[1;34m|[m[1;34m/[m  
+* [33mc298b07[m Created main , and classes and methods
+* [33m2b15e2b[m Initial commit
