@@ -6,7 +6,7 @@ public class Main {
 
         SwingUtilities.invokeLater(() -> {
             SimulationWindow window = new SimulationWindow(
-                    "Build Your Solar System",
+                    "Universe creator",
                     galaxy.byDescendingRadius()
             );
 

@@ -10,7 +10,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Random; // NEW
+import java.util.Random;
 
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -33,10 +33,11 @@ public class SimulationPanel extends JPanel {
     private boolean planetMode = false;
     private int planetCount = 0;
 
+    // Controls Play and Pause.
     private boolean running = false;
 
     // --------------------------------
-    // NEW: BACKGROUND STARS
+    // BACKGROUND STARS
     // --------------------------------
 
     private static final int BACKGROUND_STAR_COUNT = 150;
@@ -57,7 +58,7 @@ public class SimulationPanel extends JPanel {
         setBackground(Color.BLACK);
         setPreferredSize(new Dimension(1000, 600));
 
-        // NEW: Generate decorative stars once.
+        // Generate background stars once.
         generateBackgroundStars();
 
         addMouseListener(new MouseAdapter() {
@@ -96,35 +97,33 @@ public class SimulationPanel extends JPanel {
     }
 
     // --------------------------------
-    // NEW: GENERATE BACKGROUND STARS
+    // UPDATED: GENERATE BACKGROUND STARS
     // --------------------------------
 
     private void generateBackgroundStars() {
 
         backgroundStars.clear();
 
-        int width = getPreferredSize().width;
-        int height = getPreferredSize().height;
-
         for (int i = 0; i < BACKGROUND_STAR_COUNT; i++) {
 
-            int x = random.nextInt(width);
-            int y = random.nextInt(height);
+            // UPDATED: Store positions between 0.0 and 1.0.
+            double x = random.nextDouble();
+            double y = random.nextDouble();
 
-            // Stars are 1 or 2 pixels wide.
+            // Small decorative stars.
             int size = random.nextInt(2) + 1;
 
-            // Different shades of grey and white.
+            // Brightness between 100 and 255.
             int brightness = random.nextInt(156) + 100;
 
-            BackgroundStar star = new BackgroundStar(
-                    x,
-                    y,
-                    size,
-                    brightness
+            backgroundStars.add(
+                    new BackgroundStar(
+                            x,
+                            y,
+                            size,
+                            brightness
+                    )
             );
-
-            backgroundStars.add(star);
         }
     }
 
@@ -162,7 +161,7 @@ public class SimulationPanel extends JPanel {
         bodies.clear();
         planetCount = 0;
 
-        // Background stars are deliberately NOT cleared.
+        // Background stars remain unchanged.
         repaint();
     }
 
@@ -217,7 +216,7 @@ public class SimulationPanel extends JPanel {
                 Physics.G * star.mass / distance
         );
 
-        // Initial velocity perpendicular to gravity.
+        // Tangential velocity for circular orbit.
         double vx = -dy / distance * speed;
         double vy = dx / distance * speed;
 
@@ -249,8 +248,7 @@ public class SimulationPanel extends JPanel {
             return;
         }
 
-        // Prevent placing two bodies in exactly
-        // the same simulation location.
+        // Prevent identical positions.
         for (Body body : bodies) {
             if (body.l.x == position.x
                     && body.l.y == position.y) {
@@ -279,6 +277,7 @@ public class SimulationPanel extends JPanel {
 
     private void tick() {
 
+        // Do not update physics when paused.
         if (!running) {
             return;
         }
@@ -301,7 +300,7 @@ public class SimulationPanel extends JPanel {
         List<Velocity> accelerations =
                 new ArrayList<>();
 
-        // Calculate all accelerations first.
+        // First calculate accelerations.
         for (Body body : bodies) {
 
             double ax = 0;
@@ -331,10 +330,12 @@ public class SimulationPanel extends JPanel {
                 ay += acceleration.vy;
             }
 
-            accelerations.add(new Velocity(ax, ay));
+            accelerations.add(
+                    new Velocity(ax, ay)
+            );
         }
 
-        // Update all positions after calculations.
+        // Then update all bodies.
         for (int i = 0; i < bodies.size(); i++) {
 
             Physics.updateBody(
@@ -405,21 +406,15 @@ public class SimulationPanel extends JPanel {
                 RenderingHints.VALUE_ANTIALIAS_ON
         );
 
-        // --------------------------------
-        // NEW: DRAW BACKGROUND STARS FIRST
-        // --------------------------------
-
+        // UPDATED: Draw stars using current panel dimensions.
         for (BackgroundStar star : backgroundStars) {
-            star.draw(g2);
+            star.draw(g2, getWidth(), getHeight());
         }
-
-        // --------------------------------
-        // DRAW STARS AND PLANETS
-        // --------------------------------
 
         int centreX = getWidth() / 2;
         int centreY = getHeight() / 2;
 
+        // Draw interactive celestial bodies.
         for (Body body : bodies) {
 
             int x = centreX
