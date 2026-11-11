@@ -26,6 +26,8 @@ public class SimulationPanel extends JPanel {
     private static final double DT = 50000;
 
     private final List<Body> bodies;
+    private final CollisionStrategy collisionStrategy =
+    new BlackHoleCollisionStrategy();
 
     private StarType selectedStarType = StarType.G;
     private PlanetType selectedPlanetType = PlanetType.ROCKY;
@@ -312,7 +314,7 @@ public class SimulationPanel extends JPanel {
         }
 
         handleStarCollisions();
-        handleBlackHoleCollisions();
+        collisionStrategy.resolveCollisions(bodies);
 
         repaint();
     }
@@ -372,49 +374,6 @@ public class SimulationPanel extends JPanel {
         }
     }
 
-    // --------------------------------
-    // BLACK HOLE COLLISIONS
-    // --------------------------------
-
-    private void handleBlackHoleCollisions() {
-
-        Iterator<Body> iterator =
-                bodies.iterator();
-
-        while (iterator.hasNext()) {
-
-            Body body = iterator.next();
-
-            if (body instanceof BlackHole) {
-                continue;
-            }
-
-            for (Body source : bodies) {
-
-                if (!(source instanceof BlackHole)) {
-                    continue;
-                }
-
-                double dx = source.l.x - body.l.x;
-                double dy = source.l.y - body.l.y;
-
-                double distance =
-                        Math.sqrt(dx * dx + dy * dy);
-
-                if (distance < source.radius
-                        + body.radius) {
-
-                    System.out.println(
-                            body.name + " was consumed by "
-                                    + source.name
-                    );
-
-                    iterator.remove();
-                    break;
-                }
-            }
-        }
-    }
 
     // A planet that touches the star is absorbed: the star grows and the planet is removed.
 private void handleStarCollisions() {
