@@ -22,11 +22,12 @@ public class SimulationWindow extends JFrame {
 
         JPanel controls = new JPanel();
 
-        // Object selection.
         JComboBox<String> objectTypes =
-                new JComboBox<>(
-                        new String[]{"Star", "Planet"}
-                );
+                new JComboBox<>(new String[]{
+                        "Star",
+                        "Planet",
+                        "Black Hole"
+                });
 
         JComboBox<StarType> starTypes =
                 new JComboBox<>(StarType.values());
@@ -34,18 +35,16 @@ public class SimulationWindow extends JFrame {
         JComboBox<PlanetType> planetTypes =
                 new JComboBox<>(PlanetType.values());
 
+        // Changes which object gets placed.
         objectTypes.addActionListener(e -> {
 
             String selected =
                     (String) objectTypes.getSelectedItem();
 
-            boolean planetMode =
-                    "Planet".equals(selected);
+            simulationPanel.setSelectedObject(selected);
 
-            simulationPanel.setPlanetMode(planetMode);
-
-            starTypes.setEnabled(!planetMode);
-            planetTypes.setEnabled(planetMode);
+            starTypes.setEnabled("Star".equals(selected));
+            planetTypes.setEnabled("Planet".equals(selected));
         });
 
         starTypes.addActionListener(e -> {
@@ -67,37 +66,15 @@ public class SimulationWindow extends JFrame {
         starTypes.setEnabled(true);
         planetTypes.setEnabled(false);
 
-        // --------------------------------
-        // NEW: PLAY, PAUSE, RESET BUTTONS
-        // --------------------------------
+        JButton playButton = new JButton("Play");
+        JButton pauseButton = new JButton("Pause");
+        JButton resetButton = new JButton("Reset");
 
-        JButton playButton =
-                new JButton("Play");
+        playButton.addActionListener(e -> simulationPanel.play());
 
-        JButton pauseButton =
-                new JButton("Pause");
+        pauseButton.addActionListener(e -> simulationPanel.pause());
 
-        JButton resetButton =
-                new JButton("Reset");
-
-        // Start/resume physics.
-        playButton.addActionListener(e -> {
-            simulationPanel.play();
-        });
-
-        // Stop physics.
-        pauseButton.addActionListener(e -> {
-            simulationPanel.pause();
-        });
-
-        // Clear the simulation.
-        resetButton.addActionListener(e -> {
-            simulationPanel.reset();
-        });
-
-        // --------------------------------
-        // ADD CONTROLS TO WINDOW
-        // --------------------------------
+        resetButton.addActionListener(e -> simulationPanel.reset());
 
         controls.add(new JLabel("Object:"));
         controls.add(objectTypes);
@@ -108,7 +85,6 @@ public class SimulationWindow extends JFrame {
         controls.add(new JLabel("Planet type:"));
         controls.add(planetTypes);
 
-        // NEW buttons.
         controls.add(playButton);
         controls.add(pauseButton);
         controls.add(resetButton);
