@@ -241,12 +241,37 @@ public class SimulationPanel extends JPanel {
         double distance =
                 Math.sqrt(dx * dx + dy * dy);
 
-        if (distance <= star.radius
-                + selectedPlanetType.radius) {
 
-            System.out.println("Too close to the star.");
+        // Calculate the minimum placement distance based on
+        // the actual displayed sizes of both celestial bodies.
+        int starDisplayRadius = Math.max(
+                6,
+                (int) Math.round(star.radius * 6)
+        );
+
+        int planetDisplayRadius = selectedPlanetType.displayRadius;
+
+        // Convert screen pixels into simulation coordinates.
+        double minimumVisualDistance =
+                (starDisplayRadius + planetDisplayRadius)
+                / DISTANCE_SCALE;
+
+        // Preserve the original physical collision restriction.
+        double minimumPhysicalDistance =
+                star.radius + selectedPlanetType.radius;
+
+        double minimumDistance = Math.max(
+                minimumVisualDistance,
+                minimumPhysicalDistance
+        );
+
+        if (distance <= minimumDistance) {
+            System.out.println(
+                    "Too close to the star. Choose a position further away."
+            );
             return;
         }
+
 
         // Prevent identical positions.
         for (Body body : bodies) {
@@ -286,6 +311,7 @@ public class SimulationPanel extends JPanel {
             applyGravity();
         }
 
+        handleStarCollisions();
         handleBlackHoleCollisions();
 
         repaint();
@@ -390,6 +416,41 @@ public class SimulationPanel extends JPanel {
         }
     }
 
+    // A planet that touches the star is absorbed: the star grows and the planet is removed.
+private void handleStarCollisions() {
+
+    Star star = findStar();
+
+    if (star == null) {
+        return;
+    }
+
+    Iterator<Body> iterator = bodies.iterator();
+
+    while (iterator.hasNext()) {
+
+        Body body = iterator.next();
+
+        if (!(body instanceof Planet)) {
+            continue;
+        }
+
+        Planet planet = (Planet) body;
+
+        double dx = star.l.x - planet.l.x;
+        double dy = star.l.y - planet.l.y;
+        double distance = Math.sqrt(dx * dx + dy * dy);
+
+        double touchDistance =
+        (star.getDisplayRadius() + planet.type.displayRadius)
+                / DISTANCE_SCALE;
+
+    if (distance < touchDistance) {
+        star.absorbPlanet(planet);
+        iterator.remove();
+        }
+    }
+}
     // --------------------------------
     // DRAW THE SIMULATION
     // --------------------------------
@@ -435,10 +496,7 @@ public class SimulationPanel extends JPanel {
             );
 
             if (body instanceof Star) {
-                radius = Math.max(
-                        6,
-                        (int) Math.round(body.radius * 6)
-                );
+                radius = ((Star) body).getDisplayRadius();
             }
 
             if (body instanceof Planet) {
