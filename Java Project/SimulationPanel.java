@@ -286,6 +286,7 @@ public class SimulationPanel extends JPanel {
             applyGravity();
         }
 
+        handleStarCollisions();
         handleBlackHoleCollisions();
 
         repaint();
@@ -390,6 +391,41 @@ public class SimulationPanel extends JPanel {
         }
     }
 
+    // A planet that touches the star is absorbed: the star grows and the planet is removed.
+private void handleStarCollisions() {
+
+    Star star = findStar();
+
+    if (star == null) {
+        return;
+    }
+
+    Iterator<Body> iterator = bodies.iterator();
+
+    while (iterator.hasNext()) {
+
+        Body body = iterator.next();
+
+        if (!(body instanceof Planet)) {
+            continue;
+        }
+
+        Planet planet = (Planet) body;
+
+        double dx = star.l.x - planet.l.x;
+        double dy = star.l.y - planet.l.y;
+        double distance = Math.sqrt(dx * dx + dy * dy);
+
+        double touchDistance =
+        (star.getDisplayRadius() + planet.type.displayRadius)
+                / DISTANCE_SCALE;
+
+    if (distance < touchDistance) {
+        star.absorbPlanet(planet);
+        iterator.remove();
+        }
+    }
+}
     // --------------------------------
     // DRAW THE SIMULATION
     // --------------------------------
@@ -435,10 +471,7 @@ public class SimulationPanel extends JPanel {
             );
 
             if (body instanceof Star) {
-                radius = Math.max(
-                        6,
-                        (int) Math.round(body.radius * 6)
-                );
+                radius = ((Star) body).getDisplayRadius();
             }
 
             if (body instanceof Planet) {
