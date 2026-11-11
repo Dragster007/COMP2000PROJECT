@@ -26,8 +26,7 @@ public class SimulationPanel extends JPanel {
     private static final double DT = 50000;
 
     private final List<Body> bodies;
-    private final CollisionStrategy collisionStrategy =
-    new BlackHoleCollisionStrategy();
+    private final CollisionStrategy collisionStrategy = new BlackHoleCollisionStrategy();
 
     private StarType selectedStarType = StarType.G;
     private PlanetType selectedPlanetType = PlanetType.ROCKY;
@@ -44,8 +43,7 @@ public class SimulationPanel extends JPanel {
 
     private static final int BACKGROUND_STAR_COUNT = 150;
 
-    private final List<BackgroundStar> backgroundStars =
-            new ArrayList<>();
+    private final List<BackgroundStar> backgroundStars = new ArrayList<>();
 
     private final Random random = new Random();
 
@@ -75,14 +73,11 @@ public class SimulationPanel extends JPanel {
                 int centreX = getWidth() / 2;
                 int centreY = getHeight() / 2;
 
-                double simX =
-                        (e.getX() - centreX) / DISTANCE_SCALE;
+                double simX = (e.getX() - centreX) / DISTANCE_SCALE;
 
-                double simY =
-                        (e.getY() - centreY) / DISTANCE_SCALE;
+                double simY = (e.getY() - centreY) / DISTANCE_SCALE;
 
-                Location position =
-                        new Location(simX, simY);
+                Location position = new Location(simX, simY);
 
                 if (planetMode) {
                     createPlanet(position);
@@ -123,9 +118,7 @@ public class SimulationPanel extends JPanel {
                             x,
                             y,
                             size,
-                            brightness
-                    )
-            );
+                            brightness));
         }
     }
 
@@ -184,8 +177,7 @@ public class SimulationPanel extends JPanel {
                 selectedStarType.label,
                 selectedStarType,
                 position,
-                new Velocity(0, 0)
-        );
+                new Velocity(0, 0));
 
         bodies.add(star);
     }
@@ -211,12 +203,10 @@ public class SimulationPanel extends JPanel {
         double dx = position.x - star.l.x;
         double dy = position.y - star.l.y;
 
-        double distance =
-                Math.sqrt(dx * dx + dy * dy);
+        double distance = Math.sqrt(dx * dx + dy * dy);
 
         double speed = Math.sqrt(
-                Physics.G * star.mass / distance
-        );
+                Physics.G * star.mass / distance);
 
         // Tangential velocity for circular orbit.
         double vx = -dy / distance * speed;
@@ -224,8 +214,7 @@ public class SimulationPanel extends JPanel {
 
         return new Velocity(
                 star.v.vx + vx,
-                star.v.vy + vy
-        );
+                star.v.vy + vy);
     }
 
     private void createPlanet(Location position) {
@@ -240,40 +229,32 @@ public class SimulationPanel extends JPanel {
         double dx = position.x - star.l.x;
         double dy = position.y - star.l.y;
 
-        double distance =
-                Math.sqrt(dx * dx + dy * dy);
-
+        double distance = Math.sqrt(dx * dx + dy * dy);
 
         // Calculate the minimum placement distance based on
         // the actual displayed sizes of both celestial bodies.
         int starDisplayRadius = Math.max(
                 6,
-                (int) Math.round(star.radius * 6)
-        );
+                (int) Math.round(star.radius * 6));
 
         int planetDisplayRadius = selectedPlanetType.displayRadius;
 
         // Convert screen pixels into simulation coordinates.
-        double minimumVisualDistance =
-                (starDisplayRadius + planetDisplayRadius)
+        double minimumVisualDistance = (starDisplayRadius + planetDisplayRadius)
                 / DISTANCE_SCALE;
 
         // Preserve the original physical collision restriction.
-        double minimumPhysicalDistance =
-                star.radius + selectedPlanetType.radius;
+        double minimumPhysicalDistance = star.radius + selectedPlanetType.radius;
 
         double minimumDistance = Math.max(
                 minimumVisualDistance,
-                minimumPhysicalDistance
-        );
+                minimumPhysicalDistance);
 
         if (distance <= minimumDistance) {
             System.out.println(
-                    "Too close to the star. Choose a position further away."
-            );
+                    "Too close to the star. Choose a position further away.");
             return;
         }
-
 
         // Prevent identical positions.
         for (Body body : bodies) {
@@ -283,8 +264,7 @@ public class SimulationPanel extends JPanel {
             }
         }
 
-        Velocity orbitalVelocity =
-                calculateOrbitalVelocity(star, position);
+        Velocity orbitalVelocity = calculateOrbitalVelocity(star, position);
 
         planetCount++;
 
@@ -292,8 +272,7 @@ public class SimulationPanel extends JPanel {
                 "Planet " + planetCount,
                 selectedPlanetType,
                 position,
-                orbitalVelocity
-        );
+                orbitalVelocity);
 
         bodies.add(planet);
     }
@@ -325,8 +304,7 @@ public class SimulationPanel extends JPanel {
 
     private void applyGravity() {
 
-        List<Velocity> accelerations =
-                new ArrayList<>();
+        List<Velocity> accelerations = new ArrayList<>();
 
         // First calculate accelerations.
         for (Body body : bodies) {
@@ -343,24 +321,21 @@ public class SimulationPanel extends JPanel {
                 double dx = source.l.x - body.l.x;
                 double dy = source.l.y - body.l.y;
 
-                double distanceSquared =
-                        dx * dx + dy * dy;
+                double distanceSquared = dx * dx + dy * dy;
 
                 // Avoid division by zero.
                 if (distanceSquared < 1e-12) {
                     continue;
                 }
 
-                Velocity acceleration =
-                        Physics.calculateGravity(body, source);
+                Velocity acceleration = Physics.calculateGravity(body, source);
 
                 ax += acceleration.vx;
                 ay += acceleration.vy;
             }
 
             accelerations.add(
-                    new Velocity(ax, ay)
-            );
+                    new Velocity(ax, ay));
         }
 
         // Then update all bodies.
@@ -369,47 +344,45 @@ public class SimulationPanel extends JPanel {
             Physics.updateBody(
                     bodies.get(i),
                     accelerations.get(i),
-                    DT
-            );
+                    DT);
         }
     }
 
+    // A planet that touches the star is absorbed: the star grows and the planet is
+    // removed.
+    private void handleStarCollisions() {
 
-    // A planet that touches the star is absorbed: the star grows and the planet is removed.
-private void handleStarCollisions() {
+        Star star = findStar();
 
-    Star star = findStar();
-
-    if (star == null) {
-        return;
-    }
-
-    Iterator<Body> iterator = bodies.iterator();
-
-    while (iterator.hasNext()) {
-
-        Body body = iterator.next();
-
-        if (!(body instanceof Planet)) {
-            continue;
+        if (star == null) {
+            return;
         }
 
-        Planet planet = (Planet) body;
+        Iterator<Body> iterator = bodies.iterator();
 
-        double dx = star.l.x - planet.l.x;
-        double dy = star.l.y - planet.l.y;
-        double distance = Math.sqrt(dx * dx + dy * dy);
+        while (iterator.hasNext()) {
 
-        double touchDistance =
-        (star.getDisplayRadius() + planet.type.displayRadius)
-                / DISTANCE_SCALE;
+            Body body = iterator.next();
 
-    if (distance < touchDistance) {
-        star.absorbPlanet(planet);
-        iterator.remove();
+            if (!(body instanceof Planet)) {
+                continue;
+            }
+
+            Planet planet = (Planet) body;
+
+            double dx = star.l.x - planet.l.x;
+            double dy = star.l.y - planet.l.y;
+            double distance = Math.sqrt(dx * dx + dy * dy);
+
+            double touchDistance = (star.getDisplayRadius() + planet.type.displayRadius)
+                    / DISTANCE_SCALE;
+
+            if (distance < touchDistance) {
+                star.absorbPlanet(planet);
+                iterator.remove();
+            }
         }
     }
-}
     // --------------------------------
     // DRAW THE SIMULATION
     // --------------------------------
@@ -423,8 +396,7 @@ private void handleStarCollisions() {
 
         g2.setRenderingHint(
                 RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON
-        );
+                RenderingHints.VALUE_ANTIALIAS_ON);
 
         // UPDATED: Draw stars using current panel dimensions.
         for (BackgroundStar star : backgroundStars) {
@@ -439,20 +411,16 @@ private void handleStarCollisions() {
 
             int x = centreX
                     + (int) Math.round(
-                            body.l.x * DISTANCE_SCALE
-                    );
+                            body.l.x * DISTANCE_SCALE);
 
             int y = centreY
                     + (int) Math.round(
-                            body.l.y * DISTANCE_SCALE
-                    );
+                            body.l.y * DISTANCE_SCALE);
 
             int radius = Math.max(
                     MIN_RADIUS_PX,
                     (int) Math.round(
-                            body.radius * SIZE_SCALE
-                    )
-            );
+                            body.radius * SIZE_SCALE));
 
             if (body instanceof Star) {
                 radius = ((Star) body).getDisplayRadius();
@@ -469,14 +437,28 @@ private void handleStarCollisions() {
                     x - radius,
                     y - radius,
                     radius * 2,
-                    radius * 2
-            );
+                    radius * 2);
 
             g2.drawString(
                     body.name,
                     x + radius + 4,
-                    y - radius - 4
-            );
+                    y - radius - 4);
         }
+
+        g2.setColor(Color.WHITE);
+        g2.drawString("Active Celestial Bodies: " + bodies.size(), 20, 30);
+        SimulationAnalytics.Summary stats = SimulationAnalytics.analyze(bodies);
+
+        g2.drawString(
+                "Stars: " + stats.stars
+                        + " | Planets: " + stats.planets
+                        + " | Black Holes: " + stats.blackHoles,
+                20, 50);
+
+        g2.drawString(
+                String.format(
+                        "Total Mass: %.2e | Kinetic Energy: %.2e",
+                        stats.totalMass, stats.kineticEnergy),
+                20, 70);
     }
 }
